@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <video id="video" controls muted autoplay></video>
+    <div id="livetag" hidden style="font-family: sans-serif;font-weight: bold;color: white;background: #bb0000;padding: .1em .25em;width: max-content;border-radius: .3em;position: absolute;top: 1rem;left: 1rem;">LIVE</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.2.1/dist/hls.light.js"></script>
+    <script>
+      // Checks for an ongoing live stream
+      fetch('/status').then(r => r.json()).then(r => {
+        let streamsource;
+        if (r.live) {
+          streamsource = '/stream-live.m3u8'
+          document.querySelector('#livetag').hidden=false
+        } else if (r.vod) {
+          streamsource = '/stream-recording.m3u8'
+        } else {
+          console.log('No live stream or VOD available.')
+          return
+        }
+
+        Hls.DefaultConfig.debug = true;
+        if (Hls.isSupported()) {
+          const video = document.getElementById('video');
+          const hls = new Hls();
+          hls.loadSource(streamsource);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            console.log('Manifest parsed, starting playback...')
+            video.play();
+          });
+        } else {
+            throw Error('HLS unsupported!')
+        }
+      })
+    </script>
+  </body>
+</html>
